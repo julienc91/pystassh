@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/julienc91/pystassh.png)](https://travis-ci.org/julienc91/pystassh)
 [![Coverage Status](https://coveralls.io/repos/github/julienc91/pystassh/badge.svg?branch=master)](https://coveralls.io/github/julienc91/pystassh?branch=master)
-[![Documentation](https://readthedocs.org/projects/pystassh/badge/?version=latest)](http://pystassh.readthedocs.org/en/latest/)
+[![Documentation](https://readthedocs.org/projects/pystassh/badge/)](http://pystassh.readthedocs.org/en/latest/)
 
 pystassh
 ========
