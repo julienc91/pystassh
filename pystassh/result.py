@@ -14,7 +14,7 @@ class Result:
         """
         self._channel = channel
         self._command = command
-        self._buffer_size = 100
+        self._buffer_size = 100000
         self._stdout = self._read_stdout_or_stderr(False)
         self._stderr = self._read_stdout_or_stderr(True)
         self._return_code = self._read_return_code()
@@ -52,7 +52,7 @@ class Result:
     def stdout(self):
         """ The content of the standard output, as a string. Decoding errors are not caught at this level.
         """
-        return self.raw_stdout.decode("utf8").rstrip("\r\n")
+        return self.raw_stdout.decode("utf8", "replace").rstrip("\r\n")
 
     @property
     def raw_stderr(self):
@@ -64,7 +64,7 @@ class Result:
     def stderr(self):
         """ The content of the standard error output, as a string. Decoding errors are not caught at this level.
         """
-        return self.raw_stderr.decode("utf8").rstrip("\r\n")
+        return self.raw_stderr.decode("utf8", "replace").rstrip("\r\n")
 
     @property
     def return_code(self):

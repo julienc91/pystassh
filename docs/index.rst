@@ -14,7 +14,7 @@ You can go straight to the API documentation here: :ref:`ref_api`.
 Description
 ===========
 
-``pystassh`` is a python 3 library that allows you to easily run commands on a remote server via SSH.
+``pystassh`` is a Python 3 library that allows you to easily run commands on a remote server via SSH.
 
 
 Compatibility
@@ -41,6 +41,8 @@ In its current version, ``pystassh`` requires ``cffi``additional libraries to in
 * pytest-cov-2.2.1
 * Sphinx 1.4.1
 * sphinx-autobuild 0.6.0
+
+``libssh`` and ``libffi-dev`` may have to be installed separately.
 
 
 Documentation

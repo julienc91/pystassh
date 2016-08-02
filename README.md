@@ -8,10 +8,10 @@ pystassh
 An easy to use libssh wrapper to execute commands on a remote server via SSH with Python.
 
 * Author: Julien CHAUMONT (https://julienc.io)
-* Version: 1.0
-* Date: 2016-07-30
+* Version: 1.0.1
+* Date: 2016-08-02
 * Licence: MIT
-* Url: http://github.com/julienc91/pystassh
+* Url: https://julienc91.github.io/pystassh/
 
 Installation
 ------------
@@ -20,7 +20,7 @@ Just use `pip` to install the package:
 
     pip install pystassh
     
-`pystassh` is working with python 2.7, python 3+ and pypy.
+`pystassh` is working with python 3+ and pypy.
 
 Requirements
 ------------
@@ -28,14 +28,15 @@ Requirements
 `pystassh` is using libssh to work, you will have to install the library before using
 `pystassh`. Only version 0.7.3 was used during the development, but versions 0.5 and above should work fine as well with `pystassh`.
 Visit [libssh's official website](https://www.libssh.org/get-it/) for more information.
+`libffi-dev` is also required by the `cffi` module.
 
 On Debian and Ubuntu:
 
-    apt-get install libssh-4
+    apt-get install libssh-4 libffi-dev
     
 On Fedora:
 
-    dnf install libssh
+    dnf install libssh libffi-devel
 
 Examples
 --------

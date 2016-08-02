@@ -4,12 +4,12 @@ from setuptools import setup, find_packages
 
 setup(
     name="pystassh",
-    version="1.0",
+    version="1.0.1",
     author="Julien Chaumont",
     author_email="pystassh@julienc.io",
     description="An easy to use libssh wrapper to execute commands on a remote server via SSH with Python",
     license="MIT",
-    url="http://github.com/julienc91/pystassh/",
+    url="https://julienc91.github.io/pystassh/",
     packages=find_packages(),
     install_requires=["cffi"],
     setup_requires=['pytest-runner'],

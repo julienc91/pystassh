@@ -4,6 +4,8 @@ Examples
 
 Running simple commands:
 
+.. code-block :: python
+
     >>> from pystassh import Session
     >>> with Session('remote_host.org', username='foo', password='baz') as ssh_session:
     ...     res = ssh_session.execute('whoami')
@@ -11,6 +13,8 @@ Running simple commands:
     'foo'
 
 Handling errors:
+
+.. code-block :: python
 
     >>> from pystassh import Session
     >>> with Session('remote_host.org', username='foo', password='baz') as ssh_session:
@@ -20,6 +24,8 @@ Handling errors:
 
 Running multiple commands:
 
+.. code-block :: python
+
     >>> from pystassh import Session
     >>> with Session('remote_host.org', username='foo', password='baz') as ssh_session:
     ...     ssh_session.execute('echo "bar" > /tmp/foo')
@@ -28,6 +34,8 @@ Running multiple commands:
     'bar'
 
 Use a session without a ``with`` block:
+
+.. code-block :: python
 
     >>> from pystassh import Session
     >>> ssh_session = Session('remote_host.org', username='foo', password='baz')
