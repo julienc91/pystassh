@@ -101,7 +101,9 @@ class Session:
         """ Close the current connection.
         """
         if self.is_connected():
+            self._channel.close()
             api.Api.ssh_disconnect(self._session)
+        self._channel = None
         self._session = None
 
     def execute(self, command):

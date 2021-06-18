@@ -151,20 +151,28 @@ def test_session_connect_ssh_userauth_autopubkey_error(monkeypatch, patched_sess
 
 
 def test_session_disconnect(monkeypatch, patched_session):
-
     import pystassh.api
     session = patched_session()
+    channel = MagicMock()
     monkeypatch.setattr("pystassh.session.Session.is_connected", lambda *_: False)
 
     session._session = "<session object>"
+    session._channel = channel
     session.disconnect()
     assert session._session is None
+    assert session._channel is None
+    channel.close.assert_not_called()
+
+    channel.reset_mock()
 
     monkeypatch.setattr("pystassh.session.Session.is_connected", lambda *_: True)
     monkeypatch.setattr("pystassh.api.Api.ssh_disconnect", lambda *_: pystassh.api.SSH_OK)
     session._session = "<session object>"
+    session._channel = channel
     session.disconnect()
     assert session._session is None
+    assert session._channel is None
+    channel.close.assert_called_once_with()
 
 
 def test_session_with_block(monkeypatch, patched_session):
