@@ -35,6 +35,7 @@ class Channel:
 
         ret = api.Api.ssh_channel_open_session(channel)
         if ret != api.SSH_OK:
+            api.Api.ssh_channel_free(channel)
             raise exceptions.ChannelException("Channel cannot be opened: {}".format(self.get_error_message()))
 
         self._channel = channel
