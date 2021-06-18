@@ -61,41 +61,46 @@ class Session:
         if session is None:
             raise exceptions.ConnectionException("Session cannot be created: {}".format(self.get_error_message()))
 
-        ret = api.Api.ssh_options_set(session, api.SSH_OPTIONS_HOST, self._hostname)
-        if ret != api.SSH_OK:
-            raise exceptions.ConnectionException("Hostname '{}' cannot be set (return code: {}): {}".format(
-                self._hostname, ret, self.get_error_message(session)))
+        try:
+            ret = api.Api.ssh_options_set(session, api.SSH_OPTIONS_HOST, self._hostname)
+            if ret != api.SSH_OK:
+                raise exceptions.ConnectionException("Hostname '{}' cannot be set (return code: {}): {}".format(
+                    self._hostname, ret, self.get_error_message(session)))
 
-        ret = api.Api.ssh_options_set(session, api.SSH_OPTIONS_PORT_STR, self._port)
-        if ret != api.SSH_OK:
-            raise exceptions.ConnectionException("Port '{}' cannot be set (return code: {}): {}".format(
-                self._port, ret, self.get_error_message(session)))
+            ret = api.Api.ssh_options_set(session, api.SSH_OPTIONS_PORT_STR, self._port)
+            if ret != api.SSH_OK:
+                raise exceptions.ConnectionException("Port '{}' cannot be set (return code: {}): {}".format(
+                    self._port, ret, self.get_error_message(session)))
 
-        ret = api.Api.ssh_options_set(session, api.SSH_OPTIONS_USER, self._username)
-        if ret != api.SSH_OK:
-            raise exceptions.ConnectionException("Username '{}' cannot be set (return code: {}): {}".format(
-                self._username, ret, self.get_error_message(session)))
+            ret = api.Api.ssh_options_set(session, api.SSH_OPTIONS_USER, self._username)
+            if ret != api.SSH_OK:
+                raise exceptions.ConnectionException("Username '{}' cannot be set (return code: {}): {}".format(
+                    self._username, ret, self.get_error_message(session)))
 
-        ret = api.Api.ssh_connect(session)
-        if ret != api.SSH_OK:
-            raise exceptions.ConnectionException("Connection cannot be made (return code: {}): {}".format(
-                ret, self.get_error_message(session)))
+            ret = api.Api.ssh_connect(session)
+            if ret != api.SSH_OK:
+                raise exceptions.ConnectionException("Connection cannot be made (return code: {}): {}".format(
+                    ret, self.get_error_message(session)))
 
-        if self._password:
-            ret = api.Api.ssh_userauth_password(session, self._username, self._password)
-            if ret != api.SSH_AUTH_SUCCESS:
-                raise exceptions.AuthenticationException(
-                    "Authentication cannot be made with username and password (return code: {}): {}".format(
-                        ret, self.get_error_message(session)))
-        else:
-            ret = api.Api.ssh_userauth_autopubkey(session, self._passphrase)
-            if ret != api.SSH_AUTH_SUCCESS:
-                raise exceptions.AuthenticationException(
-                    "Authentication cannot be made with public key (return code: {}): {}".format(
-                        ret, self.get_error_message(session)))
+            if self._password:
+                ret = api.Api.ssh_userauth_password(session, self._username, self._password)
+                if ret != api.SSH_AUTH_SUCCESS:
+                    raise exceptions.AuthenticationException(
+                        "Authentication cannot be made with username and password (return code: {}): {}".format(
+                            ret, self.get_error_message(session)))
+            else:
+                ret = api.Api.ssh_userauth_autopubkey(session, self._passphrase)
+                if ret != api.SSH_AUTH_SUCCESS:
+                    raise exceptions.AuthenticationException(
+                        "Authentication cannot be made with public key (return code: {}): {}".format(
+                            ret, self.get_error_message(session)))
 
-        self._session = session
-        self._channel = Channel(self._session)
+            self._session = session
+            self._channel = Channel(self._session)
+        except:
+            api.Api.ssh_free(session)
+            self._session = self._channel = None
+            raise
 
     def disconnect(self):
         """ Close the current connection.
@@ -103,6 +108,7 @@ class Session:
         if self.is_connected():
             self._channel.close()
             api.Api.ssh_disconnect(self._session)
+            api.Api.ssh_free(self._session)
         self._channel = None
         self._session = None
 
