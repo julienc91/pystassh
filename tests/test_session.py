@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+import gc
 from mock import MagicMock
 
 
@@ -208,6 +209,28 @@ def test_session_disconnect(monkeypatch, patched_session):
     session.disconnect()
     assert session._session is None
     assert session._channel is None
+    channel.close.assert_called_once_with()
+    fake_ssh_free.assert_called_once_with("<session object>")
+
+
+def test_session_del(monkeypatch, patched_session):
+    import pystassh.api
+    fake_ssh_free = MagicMock()
+    session = patched_session()
+    channel = MagicMock()
+    monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
+    monkeypatch.setattr("pystassh.session.Session.is_connected", lambda *_: True)
+    monkeypatch.setattr("pystassh.api.Api.ssh_disconnect", lambda *_: pystassh.api.SSH_OK)
+
+    session._session = "<session object>"
+    session._channel = channel
+
+    # If this is the only reference to the session object, after
+    # the 'del' the object should be garbage-collected and automatically
+    # disconnect. To be sure, we call GC explicitly.
+    del session
+    gc.collect()
+
     channel.close.assert_called_once_with()
     fake_ssh_free.assert_called_once_with("<session object>")
 
