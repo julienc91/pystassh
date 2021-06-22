@@ -36,6 +36,10 @@ def _init_api():
 
         int ssh_userauth_password(void*, char*, char*);
         int ssh_userauth_autopubkey(void*, char*);
+        int ssh_userauth_publickey(void*, const char*, const void*);
+
+        int ssh_pki_import_privkey_file(const char*, const char*, void*, void*, void**);
+        void ssh_key_free(void*);
 
         void* ssh_channel_new(void*);
         int ssh_channel_open_session(void*);
@@ -63,6 +67,7 @@ class ApiMetaclass(type):
 class Api(metaclass=ApiMetaclass):
 
     ffi, lib = _init_api()
+    NULL = ffi.NULL
 
     @classmethod
     def to_string(cls, chars):
@@ -71,6 +76,10 @@ class Api(metaclass=ApiMetaclass):
     @classmethod
     def new_chars(cls, size):
         return cls.ffi.new("char[{}]".format(size))
+
+    @classmethod
+    def new_key_pointer(cls):
+        return cls.ffi.new("void**")
 
     @classmethod
     def get_error_message(cls, session):
