@@ -168,6 +168,44 @@ def test_channel_execute(monkeypatch, patched_channel):
     assert res._channel == channel._channel
 
 
+def test_channel_request_shell_error(monkeypatch, patched_channel):
+
+    import pystassh.api
+    import pystassh.exceptions
+
+    channel = patched_channel("<session object>")
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", lambda *_: "<channel object>"
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_open_session", lambda *_: pystassh.api.SSH_OK
+    )
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
+
+    with pytest.raises(pystassh.exceptions.ChannelException) as err:
+        channel.request_shell()
+
+    assert channel._channel is None
+    assert str(err.value) == "The channel is not open."
+
+    channel.open()
+    assert channel._channel is not None
+
+    monkeypatch.setattr("pystassh.api.Api.ssh_channel_request_pty", lambda *_: -1)
+    monkeypatch.setattr("pystassh.api.Api.ssh_channel_request_shell", lambda *_: -1)
+    with pytest.raises(pystassh.exceptions.ChannelException) as err:
+        channel.request_shell()
+
+    assert str(err.value).startswith("Request a shell failed:")
+
+    with pytest.raises(pystassh.exceptions.ChannelException) as err:
+        channel.request_shell(request_pty=True)
+
+    assert str(err.value).startswith("Request a pseudo-TTY failed:")
+
+
 def test_channel_get_error_message_error(monkeypatch, patched_channel):
     def fake_get_error_message(_):
         raise pystassh.exceptions.UnknownException
