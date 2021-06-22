@@ -18,7 +18,7 @@ from .channel import Channel
 
 class Session:
     def __init__(
-        self, hostname="localhost", username="", password="", passphrase="", port=22
+        self, hostname="localhost", username="", password="", passphrase="", port=22, privkey_file=""
     ):
 
         """A session object correspond to a unique SSH connexion from which commands can be run.
@@ -27,8 +27,9 @@ class Session:
             hostname (str): hostname
             username (str): user name
             password (str): user password
-            passphrase (str): optionnal passphrase to be used with a public key authentication
+            passphrase (str): optional passphrase to be used with a public key authentication
             port (int): SSH remote port
+            privkey_file (str): optional file name which has a private key (optionally encrypted with the passphrase)
         """
         # Keep a reference to the Api class so we can access it from __del__().
         # During the deinitialization of the Python VM, the module 'api' may not
@@ -38,6 +39,7 @@ class Session:
         self._username = str.encode(username)
         self._password = str.encode(password)
         self._passphrase = str.encode(passphrase)
+        self._privkey_file = str.encode(privkey_file)
         self._port = str.encode(str(port))
 
         self._session = None
@@ -118,7 +120,29 @@ class Session:
                         )
                     )
             else:
-                ret = self._api.ssh_userauth_autopubkey(session, self._passphrase)
+                if self._privkey_file:
+                    NULL = self._api.NULL
+                    pkey = self._api.new_key_pointer()
+
+                    ret = self._api.ssh_pki_import_privkey_file(
+                            self._privkey_file,
+                            self._passphrase, NULL, NULL, pkey)
+
+                    if ret != api.SSH_OK:
+                        raise exceptions.AuthenticationException(
+                            "Private key could not be used (return code: {}): {}".format(
+                                ret, self.get_error_message(session)))
+
+                    key = pkey[0] # dereference the pointer to get the key
+                    ret = self._api.ssh_userauth_publickey(session, NULL, key)
+
+                    # once authenticated we don't need the key anymore
+                    self._api.ssh_key_free(key)
+                else:
+                    ret = self._api.ssh_userauth_autopubkey(session, self._passphrase)
+
+                # check last userauth call and see if we had been authenticated
+                # or not.
                 if ret != api.SSH_AUTH_SUCCESS:
                     raise exceptions.AuthenticationException(
                         "Authentication cannot be made with public key (return code: {}): {}".format(

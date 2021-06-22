@@ -20,12 +20,13 @@ def patched_session(monkeypatch):
 
 
 def test_session_init(patched_session):
-    session = patched_session("foo", "bar", "baz", "qux", 17)
+    session = patched_session("foo", "bar", "baz", "qux", 17, "filename")
     assert session._hostname == b"foo"
     assert session._username == b"bar"
     assert session._password == b"baz"
     assert session._passphrase == b"qux"
     assert session._port == b"17"
+    assert session._privkey_file == b"filename"
 
 
 def test_session_is_connected(monkeypatch, patched_session):
@@ -199,6 +200,61 @@ def test_session_connect_ssh_userauth_password_error(monkeypatch, patched_sessio
     assert session._channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
 
+def _fake_ssh_pki_import_privkey_file(filename, passphrase, _a, _b, pkey):
+    pkey[0] = "<key object from {} with pass {}>".format(filename, passphrase)
+    import pystassh.api
+    return pystassh.api.SSH_OK
+
+def test_session_connect_ssh_userauth_privkey_error(monkeypatch, patched_session):
+
+    import pystassh.api
+    import pystassh.exceptions
+    fake_ssh_free = MagicMock()
+    fake_ssh_key_free = MagicMock()
+    session = patched_session(privkey_file="filename")
+    monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: "<session object>")
+    monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
+    monkeypatch.setattr("pystassh.api.Api.ssh_options_set", lambda *_: pystassh.api.SSH_OK)
+    monkeypatch.setattr("pystassh.api.Api.ssh_connect", lambda *_: pystassh.api.SSH_OK)
+    monkeypatch.setattr("pystassh.session.Session.is_connected", lambda self: bool(self._session))
+
+    # mock the load of a private key without passphrase
+    monkeypatch.setattr("pystassh.api.Api.new_key_pointer", lambda: ["null"])
+    monkeypatch.setattr("pystassh.api.Api.ssh_key_free", fake_ssh_key_free)
+    monkeypatch.setattr("pystassh.api.Api.ssh_pki_import_privkey_file", _fake_ssh_pki_import_privkey_file)
+
+    # make the authentication to fail
+    monkeypatch.setattr("pystassh.api.Api.ssh_userauth_publickey", lambda *_: -1)
+    with pytest.raises(pystassh.exceptions.AuthenticationException):
+        session.connect()
+    assert session._session is None
+    assert session._channel is None
+    fake_ssh_free.assert_called_once_with("<session object>")
+    fake_ssh_key_free.assert_called_once_with("<key object from b'filename' with pass b''>")
+
+    fake_ssh_free.reset_mock()
+    fake_ssh_key_free.reset_mock()
+
+    # same but with a passphrase
+    session = patched_session(privkey_file="filename", passphrase="pystassh rocks!")
+    with pytest.raises(pystassh.exceptions.AuthenticationException):
+        session.connect()
+    assert session._session is None
+    assert session._channel is None
+    fake_ssh_free.assert_called_once_with("<session object>")
+    fake_ssh_key_free.assert_called_once_with("<key object from b'filename' with pass b'pystassh rocks!'>")
+
+    fake_ssh_free.reset_mock()
+    fake_ssh_key_free.reset_mock()
+
+    # same but now it is the load of the private key which fails
+    monkeypatch.setattr("pystassh.api.Api.ssh_pki_import_privkey_file", lambda *_: -1)
+    with pytest.raises(pystassh.exceptions.AuthenticationException):
+        session.connect()
+    assert session._session is None
+    assert session._channel is None
+    fake_ssh_free.assert_called_once_with("<session object>")
+    fake_ssh_key_free.assert_not_called()
 
 def test_session_connect_ssh_userauth_autopubkey_error(monkeypatch, patched_session):
 
