@@ -15,6 +15,7 @@ class Channel:
         self._channel = None
         self._stdout = None
         self._stderr = None
+        self._shell_requested = False
 
     def _is_open(self):
         return bool(self._channel and api.Api.ssh_channel_is_open(self._channel))
@@ -41,6 +42,7 @@ class Channel:
                 "Channel cannot be opened: {}".format(self.get_error_message())
             )
 
+        self._shell_requested = False
         self._channel = channel
 
     def close(self):
@@ -48,6 +50,7 @@ class Channel:
         if self._is_open():
             api.Api.ssh_channel_send_eof(self._channel)
             api.Api.ssh_channel_free(self._channel)
+        self._shell_requested = False
         self._channel = None
 
     def __enter__(self):
@@ -56,6 +59,25 @@ class Channel:
 
     def __exit__(self, *_):
         self.close()
+
+    def request_shell(self, request_pty=False):
+        """Request a shell and optionally a PTY."""
+        if not self._is_open():
+            raise exceptions.ChannelException("The channel is not open.")
+
+        if request_pty:
+            ret = api.Api.ssh_channel_request_pty(self._channel)
+            if ret != api.SSH_OK:
+                raise exceptions.ChannelException(
+                    "Request a pseudo-TTY failed: {}".format(self.get_error_message())
+                )
+
+        ret = api.Api.ssh_channel_request_shell(self._channel)
+        if ret != api.SSH_OK:
+            raise exceptions.ChannelException(
+                "Request a shell failed: {}".format(self.get_error_message())
+            )
+        self._shell_requested = True
 
     def execute(self, command):
         """Execute a command.
