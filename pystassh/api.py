@@ -23,6 +23,7 @@ def _init_api():
     lib = ffi.dlopen(lib_name)
     ffi.cdef("""
         void* ssh_new();
+        int ssh_free(void*);
         int ssh_options_set(void*, int, char*);
         int ssh_connect(void*);
         int ssh_disconnect(void*);
