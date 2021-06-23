@@ -51,6 +51,10 @@ class Session:
         self._session = None
         self._channel = None
 
+    @property
+    def channel(self):
+        return self._channel
+
     def is_connected(self):
         """Check if the connexion is currently active.
 

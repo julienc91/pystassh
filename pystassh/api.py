@@ -7,6 +7,7 @@ from cffi import FFI
 from . import exceptions
 
 SSH_OK = 0
+SSH_ERROR = -1
 SSH_AUTH_SUCCESS = 0
 
 SSH_OPTIONS_HOST = 0
@@ -52,6 +53,9 @@ def _init_api():
         int ssh_channel_get_exit_status(void*);
         int ssh_channel_read(void*, char*, int, int);
         int ssh_channel_send_eof(void*);
+        int ssh_channel_is_eof(void*);
+        int ssh_channel_write(void*, const void*, uint32_t);
+        int ssh_channel_read_nonblocking(void*, void*, uint32_t, int);
     """
     )
     return ffi, lib
