@@ -79,6 +79,101 @@ class Channel:
             )
         self._shell_requested = True
 
+    def read_nonblocking(self, size, from_stderr=False):
+        """Do a nonblocking read on the channel.
+
+        Args:
+            size (int): bytes to try to read atomically and without blocking.
+            from_stderr (bool): read from standard error instead from stdout.
+
+        Returns:
+            string (str): the string read. It may be shorter than the expected size.
+                          An empty string does not imply an EOF: you still have to check it.
+        """
+        if size <= 0:
+            raise ValueError("Size must be positive but received '{}'".format(size))
+        if not self._is_open():
+            raise exceptions.ChannelException("The channel is not open.")
+        if not self._shell_requested:
+            raise exceptions.ChannelException(
+                "No shell was requested for this channel."
+            )
+
+        buf = api.Api.new_chars(size)
+        from_stderr = int(from_stderr)
+        ret = api.Api.ssh_channel_read_nonblocking(
+            self._channel, buf, size, from_stderr
+        )
+        if ret == api.SSH_ERROR:
+            raise exceptions.ChannelException(
+                "Read failed: {}".format(self.get_error_message())
+            )
+
+        return api.Api.to_string(buf)
+
+    def read(self, size, from_stderr=False):
+        """Reads data from a channel. The read will block.
+
+        Args:
+            size (int): bytes to read.
+            from_stderr (bool): read from standard error instead from stdout.
+
+        Returns:
+            string (str): the string read. Returns an empty string on EOF.
+        """
+        if size <= 0:
+            raise ValueError("Size must be positive but received '{}'".format(size))
+        if not self._is_open():
+            raise exceptions.ChannelException("The channel is not open.")
+        if not self._shell_requested:
+            raise exceptions.ChannelException(
+                "No shell was requested for this channel."
+            )
+
+        buf = api.Api.new_chars(size)
+        from_stderr = int(from_stderr)
+        ret = api.Api.ssh_channel_read(self._channel, buf, size, from_stderr)
+        if ret == api.SSH_ERROR or ret < 0:
+            raise exceptions.ChannelException(
+                "Read failed: {}".format(self.get_error_message())
+            )
+
+        return api.Api.to_string(buf)
+
+    def write(self, data):
+        """Blocking write on a channel.
+
+        Args:
+            data (str): data to encode (to bytes) and write (not binary safe).
+
+        Results:
+            The number of bytes written.
+        """
+        if not self._is_open():
+            raise exceptions.ChannelException("The channel is not open.")
+        if not self._shell_requested:
+            raise exceptions.ChannelException(
+                "No shell was requested for this channel."
+            )
+
+        data = str.encode(data)
+        sz = len(data)
+
+        ret = api.Api.ssh_channel_write(self._channel, data, sz)
+        if ret == api.SSH_ERROR:
+            raise exceptions.ChannelException(
+                "Write failed: {}".format(self.get_error_message())
+            )
+
+        return ret
+
+    def is_eof(self):
+        """Check if remote has sent an EOF."""
+        if not self._is_open():
+            raise exceptions.ChannelException("The channel is not open.")
+        ret = api.Api.ssh_channel_is_eof(self._channel)
+        return bool(ret)
+
     def execute(self, command):
         """Execute a command.
 

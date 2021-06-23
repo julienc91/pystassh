@@ -161,16 +161,13 @@ def test_channel_execute(monkeypatch, session):
 
 
 def test_channel_request_shell_error(monkeypatch, session):
-
-    import pystassh.api
-    import pystassh.exceptions
-
     channel = Channel(session)
     monkeypatch.setattr(
-        "pystassh.api.Api.ssh_channel_new", lambda *_: "<channel object>"
+        "pystassh.api.Api.ssh_channel_new", Mock(return_value="<channel object>")
     )
     monkeypatch.setattr(
-        "pystassh.api.Api.ssh_channel_open_session", lambda *_: pystassh.api.SSH_OK
+        "pystassh.api.Api.ssh_channel_open_session",
+        Mock(return_value=pystassh.api.SSH_OK),
     )
     monkeypatch.setattr(
         "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
@@ -185,8 +182,14 @@ def test_channel_request_shell_error(monkeypatch, session):
     channel.open()
     assert channel._channel is not None
 
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_request_pty", lambda *_: -1)
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_request_shell", lambda *_: -1)
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_request_pty",
+        Mock(return_value=pystassh.api.SSH_ERROR),
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_request_shell",
+        Mock(return_value=pystassh.api.SSH_ERROR),
+    )
     with pytest.raises(pystassh.exceptions.ChannelException) as err:
         channel.request_shell()
 
@@ -196,6 +199,174 @@ def test_channel_request_shell_error(monkeypatch, session):
         channel.request_shell(request_pty=True)
 
     assert str(err.value).startswith("Request a pseudo-TTY failed:")
+
+
+@pytest.mark.parametrize("read_method", ["read", "read_nonblocking"])
+def test_channel_read_write_error_on_closed_channel(monkeypatch, session, read_method):
+    channel = Channel(session)
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", Mock(return_value="<channel object>")
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_open_session",
+        Mock(return_value=pystassh.api.SSH_OK),
+    )
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
+
+    with pytest.raises(ValueError):
+        getattr(channel, read_method)(-1)
+
+    with pytest.raises(
+        pystassh.exceptions.ChannelException, match="The channel is not open"
+    ):
+        getattr(channel, read_method)(1)
+
+    with pytest.raises(
+        pystassh.exceptions.ChannelException, match="The channel is not open"
+    ):
+        channel.write("")
+
+    with pytest.raises(
+        pystassh.exceptions.ChannelException, match="The channel is not open"
+    ):
+        channel.is_eof()
+
+
+@pytest.mark.parametrize("read_method", ["read", "read_nonblocking"])
+def test_channel_read_write_error_without_shell(monkeypatch, session, read_method):
+    channel = Channel(session)
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", Mock(return_value="<channel object>")
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_open_session",
+        Mock(return_value=pystassh.api.SSH_OK),
+    )
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
+
+    # we open a channel but we don't request a shell
+    channel.open()
+
+    with pytest.raises(
+        pystassh.exceptions.ChannelException,
+        match="No shell was requested for this channel",
+    ):
+        getattr(channel, read_method)(1)
+
+    with pytest.raises(
+        pystassh.exceptions.ChannelException,
+        match="No shell was requested for this channel",
+    ):
+        channel.write("")
+
+
+@pytest.mark.parametrize("read_method", ["read", "read_nonblocking"])
+def test_channel_read_write_error(monkeypatch, session, read_method):
+    channel = Channel(session)
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", Mock(return_value="<channel object>")
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_open_session",
+        Mock(return_value=pystassh.api.SSH_OK),
+    )
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_request_shell",
+        Mock(return_value=pystassh.api.SSH_OK),
+    )
+
+    # we open a channel and request a shell
+    channel.open()
+    channel.request_shell()
+
+    # make the read/write calls to fail
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_{}".format(read_method),
+        Mock(return_value=pystassh.api.SSH_ERROR),
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_write", Mock(return_value=pystassh.api.SSH_ERROR)
+    )
+    with pytest.raises(
+        pystassh.exceptions.ChannelException,
+        match="Read failed: <error message irrecoverable>",
+    ):
+        getattr(channel, read_method)(1)
+
+    with pytest.raises(
+        pystassh.exceptions.ChannelException,
+        match="Write failed: <error message irrecoverable>",
+    ):
+        channel.write("")
+
+
+@pytest.mark.parametrize("read_method", ["read", "read_nonblocking"])
+def test_channel_read_write(monkeypatch, session, read_method):
+    channel = Channel(session)
+    monkeypatch.setattr("pystassh.api.Api.new_chars", lambda sz: [0] * sz)
+    monkeypatch.setattr("pystassh.api.Api.to_string", lambda buf: buf[0])
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", Mock(return_value="<channel object>")
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_open_session",
+        Mock(return_value=pystassh.api.SSH_OK),
+    )
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_request_shell",
+        Mock(return_value=pystassh.api.SSH_OK),
+    )
+
+    def _fake_read(ch, buf, sz, stderr):
+        sz = len(buf)
+        buf[0] = "<read {} bytes from {}>".format(sz, ch)
+        import pystassh.api
+
+        return pystassh.api.SSH_OK
+
+    _fake_write = Mock()
+
+    # we open a channel and request a shell
+    channel.open()
+    channel.request_shell()
+
+    with pytest.raises(ValueError):
+        channel.read(-3)
+
+    # make the read/write calls to succeed
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_{}".format(read_method), _fake_read
+    )
+    monkeypatch.setattr("pystassh.api.Api.ssh_channel_write", _fake_write)
+
+    assert getattr(channel, read_method)(1) == "<read 1 bytes from <channel object>>"
+    assert getattr(channel, read_method)(42) == "<read 42 bytes from <channel object>>"
+
+    channel.write("foo")
+    _fake_write.assert_called_once_with("<channel object>", b"foo", 3)
+
+
+def test_channel_is_eof(monkeypatch, session):
+    channel = Channel(session)
+
+    # channel is not open
+    with pytest.raises(pystassh.exceptions.ChannelException):
+        channel.is_eof()
+
+    monkeypatch.setattr(channel, "_is_open", Mock(return_value=True))
+    monkeypatch.setattr("pystassh.api.Api.ssh_channel_is_eof", Mock(return_value=1))
+
+    assert channel.is_eof()
 
 
 def test_channel_get_error_message_error(monkeypatch, session):
