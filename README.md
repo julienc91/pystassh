@@ -9,7 +9,7 @@ An easy to use libssh wrapper to execute commands on a remote server via SSH wit
 
 * Author: Julien CHAUMONT (https://julienc.io)
 * Version: 1.0.1
-* Date: 2016-08-02
+* Date: 2021-06-25
 * Licence: MIT
 * Url: https://julienc91.github.io/pystassh/
 

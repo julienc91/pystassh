@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import pytest
 import gc
-from mock import MagicMock
+from unittest.mock import MagicMock
+
+import pytest
 
 
 @pytest.fixture
