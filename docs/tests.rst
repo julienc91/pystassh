@@ -10,7 +10,7 @@ Tu run the tests, clone the GitHub repository (see :ref:`installation_from_sourc
 
     $ pip install requirements.txt
 
-The run the test suite with:
+The run the test suite with::
 
     $ pytest .
 

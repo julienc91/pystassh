@@ -22,9 +22,7 @@ Compatibility
 
 Currently supported versions and implementations of Python are:
 
-* python 3.3
-* python 3.4
-* python 3.5
+* python 3.6+
 * pypy3
 
 Others might be compatible but are not officially supported.
@@ -34,13 +32,7 @@ Requirements
 ============
 
 Required libraries are automatically installed when installing ``pystassh`` (see :ref:`install` to learn more).
-In its current version, ``pystassh`` requires additional libraries to interact with ``libssh`` and to run the tests and build the documentation:
-
-* cffi 1.7.0
-* pytest 2.9.1
-* pytest-cov-2.2.1
-* Sphinx 1.4.1
-* sphinx-autobuild 0.6.0
+You can install them by running ``pip install -r requirements.txt``.
 
 ``libssh`` and ``libffi-dev`` may have to be installed separately.
 
