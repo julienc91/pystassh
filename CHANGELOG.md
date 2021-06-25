@@ -1,3 +1,10 @@
+## 1.1.0 - 2021-06-25
+
+List of changes
+* fix memory leaks (thanks @eldipa!)
+* BREAKING: drop support for python < 3.6
+* remove test dependency on `mock`
+
 ## 1.0.1 - 2016-08-02
 
 List of changes
