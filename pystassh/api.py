@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import ctypes.util
-from cffi import FFI
-from . import exceptions
 
+from cffi import FFI
+
+from . import exceptions
 
 SSH_OK = 0
 SSH_AUTH_SUCCESS = 0
@@ -17,11 +18,14 @@ def _init_api():
 
     lib_name = ctypes.util.find_library("ssh")
     if not lib_name:
-        raise exceptions.PystasshException("libssh not found, please visit https://www.libssh.org/get-it/")
+        raise exceptions.PystasshException(
+            "libssh not found, please visit https://www.libssh.org/get-it/"
+        )
 
     ffi = FFI()
     lib = ffi.dlopen(lib_name)
-    ffi.cdef("""
+    ffi.cdef(
+        """
         void* ssh_new();
         int ssh_free(void*);
         int ssh_options_set(void*, int, char*);
@@ -44,12 +48,12 @@ def _init_api():
         int ssh_channel_get_exit_status(void*);
         int ssh_channel_read(void*, char*, int, int);
         int ssh_channel_send_eof(void*);
-    """)
+    """
+    )
     return ffi, lib
 
 
 class ApiMetaclass(type):
-
     def __getattr__(cls, name):
         if hasattr(cls.lib, name):
             return getattr(cls.lib, name)

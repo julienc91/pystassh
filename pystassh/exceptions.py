@@ -2,30 +2,30 @@
 
 
 class PystasshException(Exception):
-    """ A base exception for all other Pystassh exceptions.
-    """
+    """A base exception for all other Pystassh exceptions."""
+
     pass
 
 
 class ConnectionException(PystasshException):
-    """ Raised when something went wrong during the connection process.
-    """
+    """Raised when something went wrong during the connection process."""
+
     pass
 
 
 class AuthenticationException(PystasshException):
-    """ Raised when something went wrong during the authentication process.
-    """
+    """Raised when something went wrong during the authentication process."""
+
     pass
 
 
 class ChannelException(PystasshException):
-    """ Raised when an error occurred in the context of a channel.
-    """
+    """Raised when an error occurred in the context of a channel."""
+
     pass
 
 
 class UnknownException(PystasshException):
-    """ Sometimes we just don't know what happened...
-    """
+    """Sometimes we just don't know what happened..."""
+
     pass

@@ -13,12 +13,16 @@ def patched_result(monkeypatch):
     monkeypatch.setattr("pystassh.api.Api.ssh_get_error", lambda *_: "<error message>")
 
     from pystassh.result import Result
+
     return Result
 
 
 def test_result_init(monkeypatch, patched_result):
 
-    monkeypatch.setattr("pystassh.result.Result._read_stdout_or_stderr", lambda _, b: b"bar\n" if b else b"foo\n")
+    monkeypatch.setattr(
+        "pystassh.result.Result._read_stdout_or_stderr",
+        lambda _, b: b"bar\n" if b else b"foo\n",
+    )
     monkeypatch.setattr("pystassh.result.Result._read_return_code", lambda _: 0)
 
     result = patched_result("<channel object>", "ls")
@@ -30,7 +34,10 @@ def test_result_init(monkeypatch, patched_result):
 
 def test_result_properties(monkeypatch, patched_result):
 
-    monkeypatch.setattr("pystassh.result.Result._read_stdout_or_stderr", lambda _, b: b"bar\n" if b else b"foo\n")
+    monkeypatch.setattr(
+        "pystassh.result.Result._read_stdout_or_stderr",
+        lambda _, b: b"bar\n" if b else b"foo\n",
+    )
     monkeypatch.setattr("pystassh.result.Result._read_return_code", lambda _: 17)
 
     result = patched_result("<channel object>", "ls")
@@ -52,12 +59,12 @@ def test_result_read_return_code(monkeypatch, patched_result):
 
 
 def test_result_read_stdout_or_stderr(monkeypatch, patched_result):
-
     def fake_ssh_channel_read(*_):
         if fake_ssh_channel_read.nb_loops == 3:
             return 0
         fake_ssh_channel_read.nb_loops += 1
         return 3
+
     fake_ssh_channel_read.nb_loops = 0
 
     monkeypatch.setattr("pystassh.result.Result._read_return_code", lambda _: 17)

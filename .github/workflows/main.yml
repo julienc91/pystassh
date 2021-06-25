@@ -25,6 +25,11 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    - name: Run linters and checkers
+      run: |
+        isort --profile black --check-only .
+        black .
+        flake8 --max-line-length=130 .
     - name: Run pytest
       run: |
         pytest . --cov=pystassh/ --cov-report=xml

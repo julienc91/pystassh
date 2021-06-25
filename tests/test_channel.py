@@ -14,6 +14,7 @@ def patched_channel(monkeypatch):
     monkeypatch.setattr("pystassh.api.Api.ssh_get_error", lambda *_: "<error message>")
 
     from pystassh.channel import Channel
+
     return Channel
 
 
@@ -41,18 +42,27 @@ def test_channel_is_open(monkeypatch, patched_channel):
 def test_channel_open(monkeypatch, patched_channel):
 
     import pystassh.api
+
     fake_ssh_channel_free = MagicMock()
     channel = patched_channel("<session object>")
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_new", lambda *_: "<channel object>")
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", lambda *_: "<channel object>"
+    )
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_free", fake_ssh_channel_free)
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_open_session", lambda *_: pystassh.api.SSH_OK)
-    monkeypatch.setattr("pystassh.channel.Channel._is_open", lambda self: bool(self._channel))
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_open_session", lambda *_: pystassh.api.SSH_OK
+    )
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
 
     channel.open()
     assert channel._channel == "<channel object>"
     fake_ssh_channel_free.assert_not_called()
 
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_new", lambda *_: "<new channel object>")
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", lambda *_: "<new channel object>"
+    )
     channel.open()
     assert channel._channel == "<channel object>"
     channel._channel = None
@@ -66,11 +76,14 @@ def test_channel_open(monkeypatch, patched_channel):
 def test_channel_open_ssh_channel_new_error(monkeypatch, patched_channel):
 
     import pystassh.exceptions
+
     fake_ssh_channel_free = MagicMock()
     channel = patched_channel("<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_new", lambda *_: None)
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_free", fake_ssh_channel_free)
-    monkeypatch.setattr("pystassh.channel.Channel._is_open", lambda self: bool(self._channel))
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
 
     with pytest.raises(pystassh.exceptions.ChannelException):
         channel.open()
@@ -81,12 +94,17 @@ def test_channel_open_ssh_channel_new_error(monkeypatch, patched_channel):
 def test_channel_open_ssh_channel_open_session_error(monkeypatch, patched_channel):
 
     import pystassh.exceptions
+
     fake_ssh_channel_free = MagicMock()
     channel = patched_channel("<session object>")
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_new", lambda *_: "<channel object>")
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_new", lambda *_: "<channel object>"
+    )
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_free", fake_ssh_channel_free)
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_open_session", lambda *_: -1)
-    monkeypatch.setattr("pystassh.channel.Channel._is_open", lambda self: bool(self._channel))
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
 
     with pytest.raises(pystassh.exceptions.ChannelException):
         channel.open()
@@ -97,6 +115,7 @@ def test_channel_open_ssh_channel_open_session_error(monkeypatch, patched_channe
 def test_channel_close(monkeypatch, patched_channel):
 
     import pystassh.api
+
     fake_ssh_channel_free = MagicMock(return_value=pystassh.api.SSH_OK)
     channel = patched_channel("<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_free", fake_ssh_channel_free)
@@ -108,7 +127,9 @@ def test_channel_close(monkeypatch, patched_channel):
     fake_ssh_channel_free.assert_not_called()
 
     monkeypatch.setattr("pystassh.channel.Channel._is_open", lambda *_: True)
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_send_eof", lambda *_: pystassh.api.SSH_OK)
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_send_eof", lambda *_: pystassh.api.SSH_OK
+    )
     channel._channel = "<channel object>"
     channel.close()
     assert channel._channel is None
@@ -116,11 +137,12 @@ def test_channel_close(monkeypatch, patched_channel):
 
 
 def test_channel_with_block(monkeypatch, patched_channel):
-
     def fake_open(self):
         self._channel = "<channel object>"
 
-    monkeypatch.setattr("pystassh.channel.Channel._is_open", lambda self: bool(self._channel))
+    monkeypatch.setattr(
+        "pystassh.channel.Channel._is_open", lambda self: bool(self._channel)
+    )
     monkeypatch.setattr("pystassh.channel.Channel.open", fake_open)
     monkeypatch.setattr("pystassh.channel.Channel.close", lambda _: None)
 
@@ -146,7 +168,9 @@ def test_channel_execute(monkeypatch, patched_channel):
     with pytest.raises(pystassh.exceptions.ChannelException):
         channel.execute("ls")
 
-    monkeypatch.setattr("pystassh.api.Api.ssh_channel_request_exec", lambda *_: pystassh.api.SSH_OK)
+    monkeypatch.setattr(
+        "pystassh.api.Api.ssh_channel_request_exec", lambda *_: pystassh.api.SSH_OK
+    )
     monkeypatch.setattr("pystassh.result.Result.__init__", fake_result_init)
 
     res = channel.execute("ls")

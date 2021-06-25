@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-from setuptools import setup, find_packages
 
+from setuptools import find_packages, setup
 
 current_directory = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(current_directory, "README.md")) as f:
