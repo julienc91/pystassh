@@ -110,7 +110,7 @@ class Session:
         """ Close the current connection.
         """
         if self.is_connected():
-            self._channel.close()
+            self._channel and self._channel.close()
             self._api.ssh_disconnect(self._session)
             self._api.ssh_free(self._session)
         self._channel = None
