@@ -1,3 +1,8 @@
+## Unreleased
+
+List of changes
+* NEW: `privkey_file` parameter on the `Session` constructor to use a custom key (thanks @eldipa!)
+
 ## 1.1.0 - 2021-06-25
 
 List of changes

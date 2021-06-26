@@ -3,6 +3,7 @@
 import gc
 from unittest.mock import MagicMock
 
+import cffi
 import pytest
 
 import pystassh.api
@@ -10,18 +11,8 @@ import pystassh.exceptions
 from pystassh import Session
 
 
-@pytest.fixture
-def patched_session(monkeypatch):
-
-    monkeypatch.setattr("ctypes.util.find_library", lambda _: "libssh.so.42")
-    monkeypatch.setattr("cffi.FFI.dlopen", lambda *_: MagicMock())
-    monkeypatch.setattr("pystassh.api.Api.to_string", lambda chars: chars)
-    monkeypatch.setattr("pystassh.api.Api.ssh_get_error", lambda *_: "<error message>")
-    return Session
-
-
-def test_session_init(patched_session):
-    session = patched_session("foo", "bar", "baz", "qux", 17, "filename")
+def test_session_init():
+    session = Session("foo", "bar", "baz", "qux", 17, "filename")
     assert session._hostname == b"foo"
     assert session._username == b"bar"
     assert session._password == b"baz"
@@ -30,9 +21,9 @@ def test_session_init(patched_session):
     assert session._privkey_file == b"filename"
 
 
-def test_session_is_connected(monkeypatch, patched_session):
+def test_session_is_connected(monkeypatch):
 
-    session = patched_session()
+    session = Session()
     assert session.is_connected() is False
 
     session._session = "<session object>"
@@ -46,16 +37,16 @@ def test_session_is_connected(monkeypatch, patched_session):
     assert session.is_connected() is False
 
 
-def test_session_connect(monkeypatch, patched_session):
-
+def test_session_connect(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session()
+    session = Session()
     monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: "<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr(
         "pystassh.api.Api.ssh_options_set", lambda *_: pystassh.api.SSH_OK
     )
     monkeypatch.setattr("pystassh.api.Api.ssh_connect", lambda *_: pystassh.api.SSH_OK)
+    monkeypatch.setattr("pystassh.api.Api.ssh_disconnect", lambda *_: None)
     monkeypatch.setattr(
         "pystassh.api.Api.ssh_userauth_password",
         lambda *_: pystassh.api.SSH_AUTH_SUCCESS,
@@ -83,10 +74,9 @@ def test_session_connect(monkeypatch, patched_session):
     fake_ssh_free.assert_not_called()
 
 
-def test_session_connect_ssh_new_error(monkeypatch, patched_session):
-
+def test_session_connect_ssh_new_error(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session()
+    session = Session()
     monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: None)
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr(
@@ -100,10 +90,9 @@ def test_session_connect_ssh_new_error(monkeypatch, patched_session):
     fake_ssh_free.assert_not_called()
 
 
-def test_session_connect_ssh_options_set_error(monkeypatch, patched_session):
-
+def test_session_connect_ssh_options_set_error(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session()
+    session = Session()
     monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: "<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr(
@@ -146,10 +135,9 @@ def test_session_connect_ssh_options_set_error(monkeypatch, patched_session):
     fake_ssh_free.reset_mock()
 
 
-def test_session_connect_ssh_connect_error(monkeypatch, patched_session):
-
+def test_session_connect_ssh_connect_error(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session()
+    session = Session()
     monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: "<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr(
@@ -167,10 +155,9 @@ def test_session_connect_ssh_connect_error(monkeypatch, patched_session):
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
-def test_session_connect_ssh_userauth_password_error(monkeypatch, patched_session):
-
+def test_session_connect_ssh_userauth_password_error(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session(username="foo", password="bar")
+    session = Session(username="foo", password="bar")
     monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: "<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr(
@@ -189,15 +176,17 @@ def test_session_connect_ssh_userauth_password_error(monkeypatch, patched_sessio
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
-def _fake_ssh_pki_import_privkey_file(filename, passphrase, _a, _b, pkey):
-    pkey[0] = "<key object from {} with pass {}>".format(filename, passphrase)
-    return pystassh.api.SSH_OK
+def test_session_connect_ssh_userauth_privkey_error(monkeypatch):
+    def _fake_ssh_pki_import_privkey_file(filename, passphrase, _a, _b, pkey):
+        pkey[0] = cffi.FFI().new(
+            "char[]",
+            ("<key object from {} with pass {}>".format(filename, passphrase)).encode(),
+        )
+        return pystassh.api.SSH_OK
 
-
-def test_session_connect_ssh_userauth_privkey_error(monkeypatch, patched_session):
     fake_ssh_free = MagicMock()
     fake_ssh_key_free = MagicMock()
-    session = patched_session(privkey_file="filename")
+    session = Session(privkey_file="filename")
     monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: "<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr(
@@ -209,7 +198,7 @@ def test_session_connect_ssh_userauth_privkey_error(monkeypatch, patched_session
     )
 
     # mock the load of a private key without passphrase
-    monkeypatch.setattr("pystassh.api.Api.new_key_pointer", lambda: ["null"])
+    # monkeypatch.setattr("pystassh.api.Api.new_key_pointer", lambda: ["null"])
     monkeypatch.setattr("pystassh.api.Api.ssh_key_free", fake_ssh_key_free)
     monkeypatch.setattr(
         "pystassh.api.Api.ssh_pki_import_privkey_file",
@@ -223,23 +212,19 @@ def test_session_connect_ssh_userauth_privkey_error(monkeypatch, patched_session
     assert session._session is None
     assert session._channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
-    fake_ssh_key_free.assert_called_once_with(
-        "<key object from b'filename' with pass b''>"
-    )
+    fake_ssh_key_free.assert_called_once()
 
     fake_ssh_free.reset_mock()
     fake_ssh_key_free.reset_mock()
 
     # same but with a passphrase
-    session = patched_session(privkey_file="filename", passphrase="pystassh rocks!")
+    session = Session(privkey_file="filename", passphrase="pystassh rocks!")
     with pytest.raises(pystassh.exceptions.AuthenticationException):
         session.connect()
     assert session._session is None
     assert session._channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
-    fake_ssh_key_free.assert_called_once_with(
-        "<key object from b'filename' with pass b'pystassh rocks!'>"
-    )
+    fake_ssh_key_free.assert_called_once()
 
     fake_ssh_free.reset_mock()
     fake_ssh_key_free.reset_mock()
@@ -254,10 +239,9 @@ def test_session_connect_ssh_userauth_privkey_error(monkeypatch, patched_session
     fake_ssh_key_free.assert_not_called()
 
 
-def test_session_connect_ssh_userauth_autopubkey_error(monkeypatch, patched_session):
-
+def test_session_connect_ssh_userauth_autopubkey_error(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session()
+    session = Session()
     monkeypatch.setattr("pystassh.api.Api.ssh_new", lambda *_: "<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr(
@@ -276,9 +260,9 @@ def test_session_connect_ssh_userauth_autopubkey_error(monkeypatch, patched_sess
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
-def test_session_disconnect(monkeypatch, patched_session):
+def test_session_disconnect(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session()
+    session = Session()
     channel = MagicMock()
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr("pystassh.session.Session.is_connected", lambda *_: False)
@@ -307,9 +291,9 @@ def test_session_disconnect(monkeypatch, patched_session):
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
-def test_session_del(monkeypatch, patched_session):
+def test_session_del(monkeypatch):
     fake_ssh_free = MagicMock()
-    session = patched_session()
+    session = Session()
     channel = MagicMock()
     monkeypatch.setattr("pystassh.api.Api.ssh_free", fake_ssh_free)
     monkeypatch.setattr("pystassh.session.Session.is_connected", lambda *_: True)
@@ -330,7 +314,7 @@ def test_session_del(monkeypatch, patched_session):
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
-def test_session_with_block(monkeypatch, patched_session):
+def test_session_with_block(monkeypatch):
     def fake_connect(self):
         self._session = "<session object>"
 
@@ -340,12 +324,12 @@ def test_session_with_block(monkeypatch, patched_session):
     monkeypatch.setattr("pystassh.session.Session.connect", fake_connect)
     monkeypatch.setattr("pystassh.session.Session.disconnect", lambda _: None)
 
-    with patched_session() as session:
+    with Session() as session:
         assert session.is_connected()
 
 
-def test_session_execute(monkeypatch, patched_session):
-    session = patched_session()
+def test_session_execute(monkeypatch):
+    session = Session()
     with pytest.raises(pystassh.exceptions.PystasshException):
         session.execute("ls")
 
@@ -356,16 +340,18 @@ def test_session_execute(monkeypatch, patched_session):
         "pystassh.channel.Channel.execute",
         lambda _, command: "<result of {}>".format(command),
     )
+    monkeypatch.setattr("pystassh.api.Api.ssh_disconnect", lambda *_: None)
+    monkeypatch.setattr("pystassh.api.Api.ssh_free", lambda *_: None)
 
     session._session = "<session object>"
     session._channel = pystassh.channel.Channel(session._session)
     assert session.execute("ls") == "<result of ls>"
 
 
-def test_session_get_error_message_error(monkeypatch, patched_session):
+def test_session_get_error_message_error(monkeypatch):
     def fake_get_error_message(_):
         raise pystassh.exceptions.UnknownException
 
     monkeypatch.setattr("pystassh.api.Api.get_error_message", fake_get_error_message)
-    session = patched_session()
+    session = Session()
     assert session.get_error_message() == "<error message irrecoverable>"
