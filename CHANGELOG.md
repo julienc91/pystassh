@@ -1,7 +1,8 @@
-## Unreleased
+## 1.2.0 - 2021-06-26
 
 List of changes
 * NEW: `privkey_file` parameter on the `Session` constructor to use a custom key (thanks @eldipa!)
+* NEW: API to use a `Channel` in shell mode (thanks @eldipa!)
 
 ## 1.1.0 - 2021-06-25
 

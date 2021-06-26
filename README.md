@@ -8,8 +8,8 @@ pystassh
 An easy to use libssh wrapper to execute commands on a remote server via SSH with Python.
 
 * Author: Julien CHAUMONT (https://julienc.io)
-* Version: 1.1.0
-* Date: 2021-06-25
+* Version: 1.2.0
+* Date: 2021-06-26
 * Licence: MIT
 * Url: https://julienc91.github.io/pystassh/
 
@@ -46,7 +46,7 @@ Establishing a connection:
 ```python
 >>> from pystassh import Session
 >>> # With default private key
->>> session = Session('remote_host.org')
+>>> session = Session('remote_host.org', username='user')
 >>> # With username and password
 >>> session = Session('remote_host.org', username='foo', password='bar')
 >>> # With specific private key and a passphrase
@@ -57,7 +57,7 @@ Running simple commands:
 
 ```python
 >>> from pystassh import Session
->>> with Session('remote_host.org') as ssh_session:
+>>> with Session('remote_host.org', username='user') as ssh_session:
 ...     res = ssh_session.execute('whoami')
 >>> res.stdout
 'foo'
@@ -67,7 +67,7 @@ Handling errors:
 
 ```python
 >>> from pystassh import Session
->>> with Session('remote_host.org') as ssh_session:
+>>> with Session('remote_host.org', username='user') as ssh_session:
 ...     res = ssh_session.execute('whoam')
 >>> res.stderr
 'bash: whoam : command not found'
@@ -77,23 +77,39 @@ Running multiple commands:
 
 ```python
 >>> from pystassh import Session
->>> with Session('remote_host.org') as ssh_session:
+>>> with Session('remote_host.org', username='user') as ssh_session:
 ...     ssh_session.execute('echo "bar" > /tmp/foo')
 ...     res = ssh_session.execute('cat /tmp/foo')
 >>> res.stdout
 'bar'
 ```
     
-Use a session without a `with` block:
+Using a session without a `with` block:
 
 ```python
 >>> from pystassh import Session
->>> ssh_session = Session('remote_host.org')
+>>> ssh_session = Session('remote_host.org', username='user')
 >>> ssh_session.connect()
 >>> res = ssh_session.execute('whoami')
 >>> res.stdout
 'foo'
 >>> ssh_session.disconnect()
+```
+
+Using a shell:
+
+```python
+>>> from pystassh import Session
+>>> with Session('remote_host.org', username='user') as ssh_session:
+...     channel = ssh_session.channel
+...     with channel:
+...         channel.request_shell(request_pty=False)
+...         # non blocking read to flush the motd, if there is one
+...         channel.read_nonblocking(1024)
+...         channel.write("export foo=42;\n")
+...         channel.write("echo $foo;\n")
+...         channel.read(2048)
+b'42\n'
 ```
 
 Documentation

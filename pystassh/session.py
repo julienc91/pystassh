@@ -189,6 +189,10 @@ class Session:
             )
         return self._channel.execute(command)
 
+    @property
+    def channel(self):
+        return self._channel
+
     def __enter__(self):
         self.connect()
         return self

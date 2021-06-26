@@ -79,7 +79,7 @@ class Channel:
             )
         self._shell_requested = True
 
-    def read_nonblocking(self, size, from_stderr=False):
+    def read_nonblocking(self, size=2048, from_stderr=False):
         """Do a nonblocking read on the channel.
 
         Args:
@@ -111,7 +111,7 @@ class Channel:
 
         return api.Api.to_string(buf)
 
-    def read(self, size, from_stderr=False):
+    def read(self, size=2048, from_stderr=False):
         """Reads data from a channel. The read will block.
 
         Args:

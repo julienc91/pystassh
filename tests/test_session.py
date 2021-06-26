@@ -86,7 +86,7 @@ def test_session_connect_ssh_new_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.ConnectionException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_not_called()
 
 
@@ -106,7 +106,7 @@ def test_session_connect_ssh_options_set_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.ConnectionException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
     fake_ssh_free.reset_mock()
 
@@ -119,7 +119,7 @@ def test_session_connect_ssh_options_set_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.ConnectionException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
     fake_ssh_free.reset_mock()
 
@@ -130,7 +130,7 @@ def test_session_connect_ssh_options_set_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.ConnectionException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
     fake_ssh_free.reset_mock()
 
@@ -151,7 +151,7 @@ def test_session_connect_ssh_connect_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.ConnectionException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
@@ -172,7 +172,7 @@ def test_session_connect_ssh_userauth_password_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.AuthenticationException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
@@ -210,7 +210,7 @@ def test_session_connect_ssh_userauth_privkey_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.AuthenticationException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
     fake_ssh_key_free.assert_called_once()
 
@@ -222,7 +222,7 @@ def test_session_connect_ssh_userauth_privkey_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.AuthenticationException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
     fake_ssh_key_free.assert_called_once()
 
@@ -234,7 +234,7 @@ def test_session_connect_ssh_userauth_privkey_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.AuthenticationException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
     fake_ssh_key_free.assert_not_called()
 
@@ -256,7 +256,7 @@ def test_session_connect_ssh_userauth_autopubkey_error(monkeypatch):
     with pytest.raises(pystassh.exceptions.AuthenticationException):
         session.connect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     fake_ssh_free.assert_called_once_with("<session object>")
 
 
@@ -271,7 +271,7 @@ def test_session_disconnect(monkeypatch):
     session._channel = channel
     session.disconnect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     channel.close.assert_not_called()
     fake_ssh_free.assert_not_called()
 
@@ -286,7 +286,7 @@ def test_session_disconnect(monkeypatch):
     session._channel = channel
     session.disconnect()
     assert session._session is None
-    assert session._channel is None
+    assert session.channel is None
     channel.close.assert_called_once_with()
     fake_ssh_free.assert_called_once_with("<session object>")
 
