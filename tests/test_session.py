@@ -56,6 +56,7 @@ def test_session_connect(monkeypatch, patched_session):
         "pystassh.api.Api.ssh_options_set", lambda *_: pystassh.api.SSH_OK
     )
     monkeypatch.setattr("pystassh.api.Api.ssh_connect", lambda *_: pystassh.api.SSH_OK)
+    monkeypatch.setattr("pystassh.api.Api.ssh_disconnect", lambda *_: None)
     monkeypatch.setattr(
         "pystassh.api.Api.ssh_userauth_password",
         lambda *_: pystassh.api.SSH_AUTH_SUCCESS,
@@ -356,6 +357,8 @@ def test_session_execute(monkeypatch, patched_session):
         "pystassh.channel.Channel.execute",
         lambda _, command: "<result of {}>".format(command),
     )
+    monkeypatch.setattr("pystassh.api.Api.ssh_disconnect", lambda *_: None)
+    monkeypatch.setattr("pystassh.api.Api.ssh_free", lambda *_: None)
 
     session._session = "<session object>"
     session._channel = pystassh.channel.Channel(session._session)
