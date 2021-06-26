@@ -127,11 +127,11 @@ class Session:
                     )
             else:
                 if self._privkey_file:
-                    NULL = self._api.NULL
+                    null = self._api.NULL
                     pkey = self._api.new_key_pointer()
 
                     ret = self._api.ssh_pki_import_privkey_file(
-                        self._privkey_file, self._passphrase, NULL, NULL, pkey
+                        self._privkey_file, self._passphrase, null, null, pkey
                     )
 
                     if ret != api.SSH_OK:
@@ -142,7 +142,7 @@ class Session:
                         )
 
                     key = pkey[0]  # dereference the pointer to get the key
-                    ret = self._api.ssh_userauth_publickey(session, NULL, key)
+                    ret = self._api.ssh_userauth_publickey(session, null, key)
 
                     # once authenticated we don't need the key anymore
                     self._api.ssh_key_free(key)
