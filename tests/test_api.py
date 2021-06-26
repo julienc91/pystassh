@@ -4,6 +4,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import pystassh.exceptions
+from pystassh import api
+from pystassh.api import _init_api
+
 
 @pytest.fixture
 def patched_api(monkeypatch):
@@ -12,9 +16,6 @@ def patched_api(monkeypatch):
     del mock.i_dont_exist
     monkeypatch.setattr("ctypes.util.find_library", lambda _: "libssh.so.42")
     monkeypatch.setattr("cffi.FFI.dlopen", lambda *_: mock)
-
-    from pystassh import api
-
     return api
 
 
@@ -22,8 +23,6 @@ def patched_api(monkeypatch):
 def patched_init_api(monkeypatch):
 
     monkeypatch.setattr("ctypes.util.find_library", lambda _: None)
-    from pystassh.api import _init_api
-
     return _init_api
 
 
@@ -39,9 +38,6 @@ def test_api_getattr(patched_api):
 
 
 def test_init_api(monkeypatch, patched_api):
-
-    import pystassh.exceptions
-
     monkeypatch.setattr("ctypes.util.find_library", lambda _: None)
 
     with pytest.raises(pystassh.exceptions.PystasshException):
@@ -59,9 +55,6 @@ def test_api_new_chars(monkeypatch, patched_api):
 
 
 def test_api_get_error_message(monkeypatch, patched_api):
-
-    import pystassh.exceptions
-
     def fake_get_error_message(_):
         raise ValueError()
 

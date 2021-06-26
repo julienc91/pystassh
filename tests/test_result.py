@@ -4,6 +4,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from pystassh.result import Result
+
 
 @pytest.fixture
 def patched_result(monkeypatch):
@@ -11,9 +13,6 @@ def patched_result(monkeypatch):
     monkeypatch.setattr("cffi.FFI.dlopen", lambda *_: MagicMock())
     monkeypatch.setattr("pystassh.api.Api.to_string", lambda chars: chars)
     monkeypatch.setattr("pystassh.api.Api.ssh_get_error", lambda *_: "<error message>")
-
-    from pystassh.result import Result
-
     return Result
 
 

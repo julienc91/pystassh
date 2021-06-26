@@ -28,7 +28,7 @@ jobs:
     - name: Run linters and checkers
       run: |
         isort --profile black --check-only .
-        black .
+        black --check .
         flake8 --max-line-length=130 .
     - name: Run pytest
       run: |

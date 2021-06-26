@@ -4,6 +4,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+import pystassh.api
+import pystassh.exceptions
+import pystassh.result
+from pystassh.channel import Channel
+
 
 @pytest.fixture
 def patched_channel(monkeypatch):
@@ -12,9 +17,6 @@ def patched_channel(monkeypatch):
     monkeypatch.setattr("cffi.FFI.dlopen", lambda *_: MagicMock())
     monkeypatch.setattr("pystassh.api.Api.to_string", lambda chars: chars)
     monkeypatch.setattr("pystassh.api.Api.ssh_get_error", lambda *_: "<error message>")
-
-    from pystassh.channel import Channel
-
     return Channel
 
 
@@ -40,8 +42,6 @@ def test_channel_is_open(monkeypatch, patched_channel):
 
 
 def test_channel_open(monkeypatch, patched_channel):
-
-    import pystassh.api
 
     fake_ssh_channel_free = MagicMock()
     channel = patched_channel("<session object>")
@@ -75,8 +75,6 @@ def test_channel_open(monkeypatch, patched_channel):
 
 def test_channel_open_ssh_channel_new_error(monkeypatch, patched_channel):
 
-    import pystassh.exceptions
-
     fake_ssh_channel_free = MagicMock()
     channel = patched_channel("<session object>")
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_new", lambda *_: None)
@@ -92,8 +90,6 @@ def test_channel_open_ssh_channel_new_error(monkeypatch, patched_channel):
 
 
 def test_channel_open_ssh_channel_open_session_error(monkeypatch, patched_channel):
-
-    import pystassh.exceptions
 
     fake_ssh_channel_free = MagicMock()
     channel = patched_channel("<session object>")
@@ -113,8 +109,6 @@ def test_channel_open_ssh_channel_open_session_error(monkeypatch, patched_channe
 
 
 def test_channel_close(monkeypatch, patched_channel):
-
-    import pystassh.api
 
     fake_ssh_channel_free = MagicMock(return_value=pystassh.api.SSH_OK)
     channel = patched_channel("<session object>")
@@ -151,11 +145,6 @@ def test_channel_with_block(monkeypatch, patched_channel):
 
 
 def test_channel_execute(monkeypatch, patched_channel):
-
-    import pystassh.api
-    import pystassh.exceptions
-    import pystassh.result
-
     def fake_result_init(self, channel, command):
         self._channel = channel
         self._command = command
@@ -180,9 +169,6 @@ def test_channel_execute(monkeypatch, patched_channel):
 
 
 def test_channel_get_error_message_error(monkeypatch, patched_channel):
-
-    import pystassh.exceptions
-
     def fake_get_error_message(_):
         raise pystassh.exceptions.UnknownException
 

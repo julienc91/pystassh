@@ -18,7 +18,13 @@ from .channel import Channel
 
 class Session:
     def __init__(
-        self, hostname="localhost", username="", password="", passphrase="", port=22, privkey_file=""
+        self,
+        hostname="localhost",
+        username="",
+        password="",
+        passphrase="",
+        port=22,
+        privkey_file="",
     ):
 
         """A session object correspond to a unique SSH connexion from which commands can be run.
@@ -125,15 +131,17 @@ class Session:
                     pkey = self._api.new_key_pointer()
 
                     ret = self._api.ssh_pki_import_privkey_file(
-                            self._privkey_file,
-                            self._passphrase, NULL, NULL, pkey)
+                        self._privkey_file, self._passphrase, NULL, NULL, pkey
+                    )
 
                     if ret != api.SSH_OK:
                         raise exceptions.AuthenticationException(
                             "Private key could not be used (return code: {}): {}".format(
-                                ret, self.get_error_message(session)))
+                                ret, self.get_error_message(session)
+                            )
+                        )
 
-                    key = pkey[0] # dereference the pointer to get the key
+                    key = pkey[0]  # dereference the pointer to get the key
                     ret = self._api.ssh_userauth_publickey(session, NULL, key)
 
                     # once authenticated we don't need the key anymore
