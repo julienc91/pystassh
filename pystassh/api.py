@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import ctypes.util
+import os
 
 from cffi import FFI
 
@@ -18,7 +19,7 @@ SSH_OPTIONS_USER = 4
 def _init_api():
 
     lib_name = ctypes.util.find_library("ssh")
-    if not lib_name:
+    if not lib_name and not os.environ.get("READTHEDOCS"):
         raise exceptions.PystasshException(
             "libssh not found, please visit https://www.libssh.org/get-it/"
         )
