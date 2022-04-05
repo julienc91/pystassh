@@ -1,3 +1,8 @@
+## 1.2.1 - 2022-04-05
+
+List of changes
+* fix an error occurring when running too many commands (thanks @reivilibre!)
+
 ## 1.2.0 - 2021-06-26
 
 List of changes

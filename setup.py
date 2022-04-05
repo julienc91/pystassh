@@ -10,7 +10,7 @@ with open(os.path.join(current_directory, "README.md")) as f:
 
 setup(
     name="pystassh",
-    version="1.2.0",
+    version="1.2.1",
     author="Julien Chaumont",
     author_email="pystassh@julienc.io",
     description="An easy to use libssh wrapper to execute commands on a remote server via SSH with Python",
