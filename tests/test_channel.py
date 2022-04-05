@@ -102,17 +102,10 @@ def test_channel_close(monkeypatch, session):
     fake_ssh_channel_free = Mock(return_value=pystassh.api.SSH_OK)
     channel = Channel(session)
     monkeypatch.setattr("pystassh.api.Api.ssh_channel_free", fake_ssh_channel_free)
-    monkeypatch.setattr("pystassh.channel.Channel._is_open", Mock(return_value=False))
-
-    channel._channel = "<channel object>"
-    channel.close()
-    assert channel._channel is None
-    fake_ssh_channel_free.assert_not_called()
-
-    monkeypatch.setattr("pystassh.channel.Channel._is_open", Mock(return_value=True))
     monkeypatch.setattr(
         "pystassh.api.Api.ssh_channel_send_eof", Mock(return_value=pystassh.api.SSH_OK)
     )
+
     channel._channel = "<channel object>"
     channel.close()
     assert channel._channel is None
