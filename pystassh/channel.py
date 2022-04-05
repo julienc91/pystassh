@@ -47,7 +47,7 @@ class Channel:
 
     def close(self):
         """Close the current channel."""
-        if self._is_open():
+        if self._channel is not None:
             api.Api.ssh_channel_send_eof(self._channel)
             api.Api.ssh_channel_free(self._channel)
         self._shell_requested = False
