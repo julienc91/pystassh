@@ -28,10 +28,9 @@ class Result:
         )
 
     def _read_stdout_or_stderr(self, is_stderr):
-
         content = b""
         count, buffer = self.__read(is_stderr)
-        while count:
+        while count > 0:
             content += buffer
             count, buffer = self.__read(is_stderr)
         return content
