@@ -8,8 +8,8 @@ pystassh
 An easy to use libssh wrapper to execute commands on a remote server via SSH with Python.
 
 * Author: Julien CHAUMONT (https://julienc.io)
-* Version: 1.2.1
-* Date: 2022-04-05
+* Version: 1.2.2
+* Date: 2022-05-17
 * Licence: MIT
 * Url: https://julienc91.github.io/pystassh/
 

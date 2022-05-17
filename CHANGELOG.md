@@ -1,3 +1,8 @@
+## 1.2.2 - 2022-05-17
+
+List of changes
+* fix infinite loop that could occur during a read operation (thanks @richvdh!)
+
 ## 1.2.1 - 2022-04-05
 
 List of changes
